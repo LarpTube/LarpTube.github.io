@@ -6,29 +6,220 @@
 <meta name="theme-color" content="#101010">
 <title>LarpTube</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#0f0f0f;color:#f5f5f5;font:14px Arial,sans-serif}header{height:64px;display:flex;align-items:center;padding:0 22px;gap:24px;border-bottom:1px solid #292929;position:sticky;top:0;background:#101010}header b{font-size:24px;color:#ff4545;white-space:nowrap}input{padding:12px 18px;border:1px solid #383838;border-radius:25px;background:#191919;color:white;width:min(500px,60%);margin:auto}button{padding:10px 16px;background:#292929;border:0;border-radius:9px;color:white;cursor:pointer}button:hover{background:#444}.layout{display:flex}.side{width:190px;position:fixed;top:64px;bottom:0;padding:20px 12px;border-right:1px solid #292929}.side button{display:block;width:100%;text-align:left;margin-bottom:8px;background:transparent}main{margin-left:190px;padding:24px;width:calc(100% - 190px)}.chips{display:flex;gap:10px;overflow:auto;margin-bottom:24px}.chips button{white-space:nowrap}.chips .on{background:#fff;color:#111}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:24px 16px}.card{cursor:pointer}.thumb{width:100%;aspect-ratio:16/9;border-radius:12px;background:#252525;object-fit:cover}.card h3{font-size:15px;margin:10px 0 5px}.muted{color:#aaa;line-height:1.6}.page{display:none}.player{width:100%;max-width:900px;aspect-ratio:16/9;background:#191919;border-radius:12px;display:grid;place-items:center;text-align:center;color:#bbb;padding:20px}.privacy{padding:16px 0;border-bottom:1px solid #333;display:flex;justify-content:space-between;gap:20px}@media(max-width:650px){header{padding:0 10px;gap:10px}header b{font-size:19px}.side{width:60px;padding:12px 4px}.side button{font-size:0;text-align:center;padding:14px 0}.side button:first-letter{font-size:18px}main{margin-left:60px;width:calc(100% - 60px);padding:12px}.grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:18px 10px}}
+*{box-sizing:border-box}
+body{margin:0;background:#0f0f0f;color:#f5f5f5;font:14px Arial,sans-serif}
+header{height:64px;display:flex;align-items:center;padding:0 22px;gap:24px;
+       border-bottom:1px solid #292929;position:sticky;top:0;background:#101010;z-index:10}
+header b{font-size:24px;color:#ff4545;white-space:nowrap}
+header input{padding:12px 18px;border:1px solid #383838;border-radius:25px;
+             background:#191919;color:white;width:min(500px,60%);margin:auto}
+button{padding:10px 16px;background:#292929;border:0;border-radius:9px;color:white;cursor:pointer}
+button:hover{background:#444}
+.layout{display:flex}
+.side{width:190px;position:fixed;top:64px;bottom:0;padding:20px 12px;border-right:1px solid #292929;overflow-y:auto}
+.side button{display:block;width:100%;text-align:left;margin-bottom:8px;background:transparent}
+main{margin-left:190px;padding:24px;width:calc(100% - 190px)}
+.chips{display:flex;gap:10px;overflow:auto;margin-bottom:24px;padding-bottom:4px}
+.chips button{white-space:nowrap}
+.chips .on{background:#fff;color:#111}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:24px 16px}
+.card{cursor:pointer}
+.thumb{width:100%;aspect-ratio:16/9;border-radius:12px;background:#252525;object-fit:cover}
+.card h3{font-size:15px;margin:10px 0 5px}
+.muted{color:#aaa;line-height:1.6}
+.page{display:none}
+
+/* YouTube embed wrapper */
+.yt-wrap{width:100%;max-width:900px;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#000}
+.yt-wrap iframe{width:100%;height:100%;border:0}
+
+.privacy{padding:16px 0;border-bottom:1px solid #333;display:flex;justify-content:space-between;gap:20px}
+#status{color:#aaa;font-size:13px;margin-bottom:16px}
+
+@media(max-width:650px){
+  header{padding:0 10px;gap:10px}
+  header b{font-size:19px}
+  .side{width:60px;padding:12px 4px}
+  .side button{font-size:0;text-align:center;padding:14px 0}
+  .side button:first-letter{font-size:18px}
+  main{margin-left:60px;width:calc(100% - 60px);padding:12px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:18px 10px}
+}
 </style>
 </head>
 <body>
-<header><b>▶ LarpTube</b><input id="q" placeholder="Search videos..." aria-label="Search videos"><button onclick="render()">Search</button></header>
-<div class="layout"><nav class="side"><button onclick="home()">⌂ Home</button><button onclick="filter('Gaming')">🎮 Gaming</button><button onclick="filter('Music')">♫ Music</button><button onclick="filter('Education')">▤ Education</button><button onclick="filter('Comedy')">☻ Comedy</button><button onclick="privacy()">⚙ Privacy</button></nav>
-<main>
-<section id="feed"><h2 id="heading">Explore videos</h2><div class="chips" id="chips"></div><div class="grid" id="grid"></div></section>
-<section id="watch" class="page"><button onclick="home()">← Home</button><h2 id="wt"></h2><div class="player">This sample video has no playable file yet.<br>Video hosting will be added later.</div><p class="muted">LarpTube video player</p></section>
-<section id="settings" class="page"><h2>Privacy settings</h2><p class="muted">These settings apply to this browser.</p><div class="privacy">Local watch history <input id="hist" type="checkbox"></div><div class="privacy">Personalized recommendations <input id="recs" type="checkbox"></div><p><button onclick="localStorage.clear();location.reload()">Clear local data</button></p><p class="muted">The hosting provider may still process standard connection logs.</p><button onclick="home()">Back</button></section>
-</main></div>
+
+<header>
+  <b>▶ LarpTube</b>
+  <input id="q" placeholder="Search videos…" aria-label="Search videos">
+  <button onclick="render()">Search</button>
+</header>
+
+<div class="layout">
+  <nav class="side">
+    <button onclick="home()">⌂ Home</button>
+    <button onclick="filter('Gaming')">🎮 Gaming</button>
+    <button onclick="filter('Music')">♫ Music</button>
+    <button onclick="filter('Education')">▤ Education</button>
+    <button onclick="filter('Comedy')">☻ Comedy</button>
+    <button onclick="privacy()">⚙ Privacy</button>
+  </nav>
+
+  <main>
+    <section id="feed">
+      <h2 id="heading">Explore videos</h2>
+      <p id="status">Loading videos…</p>
+      <div class="chips" id="chips"></div>
+      <div class="grid"  id="grid"></div>
+    </section>
+
+    <section id="watch" class="page">
+      <button onclick="home()" style="margin-bottom:16px">← Home</button>
+      <h2 id="wt"></h2>
+      <div class="yt-wrap">
+        <iframe id="yt-player" allowfullscreen
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+        </iframe>
+      </div>
+      <p class="muted" id="wch"></p>
+    </section>
+
+    <section id="settings" class="page">
+      <h2>Privacy settings</h2>
+      <p class="muted">These settings apply to this browser only.</p>
+      <div class="privacy">Local watch history  <input id="hist" type="checkbox"></div>
+      <div class="privacy">Personalized recs    <input id="recs" type="checkbox"></div>
+      <p><button onclick="localStorage.clear();location.reload()">Clear local data</button></p>
+      <p class="muted">The hosting provider may still process standard connection logs.<br>
+         YouTube embeds are subject to <a href="https://policies.google.com/privacy"
+         style="color:#aaa">Google's privacy policy</a>.</p>
+      <button onclick="home()">Back</button>
+    </section>
+  </main>
+</div>
+
 <script>
-const data=[['Minecraft Survival','Gaming','https://images.unsplash.com/photo-1607513746994-51f730a44832?auto=format&fit=crop&w=640&q=80'],['Explore Nature','Education','https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=640&q=80'],['Music Studio','Music','https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=640&q=80'],['Funny Moments','Comedy','https://images.unsplash.com/photo-1527224857830-43a7acc85260?auto=format&fit=crop&w=640&q=80'],['Modern Technology','Technology','https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=640&q=80'],['Gaming Setup','Gaming','https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=640&q=80']];
-let cat='All';const cats=['All','Gaming','Music','Education','Comedy','Technology','News','Sports'];const $=x=>document.getElementById(x);
-cats.forEach(c=>{let b=document.createElement('button');b.textContent=c;b.onclick=()=>{cat=c;render()};$('chips').append(b)});
-function render(){[...$('chips').children].forEach(b=>b.classList.toggle('on',b.textContent===cat));$('heading').textContent=cat==='All'?'Explore videos':cat;let q=$('q').value.toLowerCase();$('grid').innerHTML='';data.filter(v=>(cat==='All'||v[1]===cat)&&v.join(' ').toLowerCase().includes(q)).forEach(v=>{let d=document.createElement('article');d.className='card';let i=document.createElement('img');i.className='thumb';i.src=v[2];i.alt='Video thumbnail';let h=document.createElement('h3');h.textContent=v[0];let m=document.createElement('div');m.className='muted';m.textContent=v[1]+' · Sample video';d.append(i,h,m);d.onclick=()=>watch(v[0]);$('grid').append(d)})}
-function hide(){['feed','watch','settings'].forEach(x=>$(x).style.display='none')}
-function home(){hide();$('feed').style.display='block';history.replaceState({},'',location.pathname);render()}
-function filter(c){cat=c;home()}
-function watch(t){hide();$('watch').style.display='block';$('wt').textContent=t;history.replaceState({},'', '?watch='+encodeURIComponent(t))}
-function privacy(){hide();$('settings').style.display='block';$('hist').checked=localStorage.getItem('lt_hist')==='1';$('recs').checked=localStorage.getItem('lt_recs')==='1'}
-$('hist').onchange=e=>localStorage.setItem('lt_hist',e.target.checked?'1':'0');$('recs').onchange=e=>localStorage.setItem('lt_recs',e.target.checked?'1':'0');$('q').addEventListener('input',render);
-let params=new URLSearchParams(location.search);if(params.has('watch'))watch(params.get('watch'));else render();
+// ── category chip labels (YouTube uses numeric IDs; we map the ones we care about)
+const CAT_NAMES = {
+  "20":"Gaming","10":"Music","27":"Education","23":"Comedy",
+  "28":"Technology","25":"News & Politics","17":"Sports"
+};
+const DISPLAY_CATS = ['All','Gaming','Music','Education','Comedy','Technology','News & Politics','Sports'];
+
+let allVideos = [];
+let cat = 'All';
+const $ = id => document.getElementById(id);
+
+// Build category chips
+DISPLAY_CATS.forEach(c => {
+  const b = document.createElement('button');
+  b.textContent = c;
+  b.onclick = () => { cat = c; render(); };
+  $('chips').append(b);
+});
+
+// ── Load videos.json produced by GitHub Actions
+async function loadVideos() {
+  try {
+    const res = await fetch('videos.json?_=' + Date.now());
+    if (!res.ok) throw new Error('No videos.json yet');
+    allVideos = await res.json();
+    $('status').textContent = allVideos.length + ' videos loaded';
+  } catch (e) {
+    // Fall back to placeholder cards while videos.json is missing
+    allVideos = [
+      { id:'dQw4w9WgXcQ', title:'Sample Video 1', channel:'Demo Channel', thumb:'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg', category:'10', published:'2024-01-01' },
+      { id:'dQw4w9WgXcQ', title:'Sample Video 2', channel:'Demo Channel', thumb:'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg', category:'20', published:'2024-01-02' },
+    ];
+    $('status').textContent = 'Using placeholder data — deploy with your API key to see real videos.';
+  }
+  render();
+}
+
+function catLabel(id) {
+  return CAT_NAMES[id] || 'Other';
+}
+
+function render() {
+  [...$('chips').children].forEach(b => b.classList.toggle('on', b.textContent === cat));
+  $('heading').textContent = cat === 'All' ? 'Explore videos' : cat;
+  const q = $('q').value.toLowerCase();
+  $('grid').innerHTML = '';
+
+  allVideos
+    .filter(v => {
+      const label = catLabel(v.category);
+      return (cat === 'All' || label === cat) &&
+             (v.title + ' ' + v.channel).toLowerCase().includes(q);
+    })
+    .forEach(v => {
+      const card = document.createElement('article');
+      card.className = 'card';
+
+      const img = document.createElement('img');
+      img.className = 'thumb';
+      img.src   = v.thumb;
+      img.alt   = v.title;
+      img.loading = 'lazy';
+
+      const h = document.createElement('h3');
+      h.textContent = v.title;
+
+      const m = document.createElement('div');
+      m.className = 'muted';
+      m.textContent = (v.channel || catLabel(v.category)) + ' · ' + (v.published || '');
+
+      card.append(img, h, m);
+      card.onclick = () => watch(v);
+      $('grid').append(card);
+    });
+
+  if ($('grid').children.length === 0) {
+    $('grid').innerHTML = '<p class="muted">No videos match your search.</p>';
+  }
+}
+
+function hide() {
+  ['feed','watch','settings'].forEach(x => $(x).style.display = 'none');
+}
+function home() {
+  hide();
+  $('feed').style.display = 'block';
+  history.replaceState({}, '', location.pathname);
+}
+function filter(c) { cat = c; home(); }
+
+function watch(v) {
+  hide();
+  $('watch').style.display = 'block';
+  $('wt').textContent = v.title;
+  $('wch').textContent = v.channel || '';
+  // Load YouTube embed — privacy-enhanced domain avoids cookies until play
+  $('yt-player').src = 'https://www.youtube-nocookie.com/embed/' + v.id + '?autoplay=1';
+  history.replaceState({}, '', '?watch=' + encodeURIComponent(v.id));
+}
+
+function privacy() {
+  hide();
+  $('settings').style.display = 'block';
+  $('hist').checked = localStorage.getItem('lt_hist') === '1';
+  $('recs').checked = localStorage.getItem('lt_recs') === '1';
+}
+
+$('hist').onchange = e => localStorage.setItem('lt_hist', e.target.checked ? '1' : '0');
+$('recs').onchange = e => localStorage.setItem('lt_recs', e.target.checked ? '1' : '0');
+$('q').addEventListener('input', render);
+
+// Handle direct ?watch=VIDEO_ID links
+const params = new URLSearchParams(location.search);
+if (params.has('watch')) {
+  loadVideos().then(() => {
+    const v = allVideos.find(x => x.id === params.get('watch'));
+    if (v) watch(v);
+  });
+} else {
+  loadVideos();
+}
 </script>
 </body>
 </html>
