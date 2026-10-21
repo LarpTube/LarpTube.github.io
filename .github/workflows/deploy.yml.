@@ -1,61 +1,42 @@
-name: Deploy LarpTube
-
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-  schedule:
-    - cron: '0 */6 * * *'   # refresh video data every 6 hours
-
-permissions:
-  contents: write            # needs write to commit videos.json
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: true
-
-jobs:
-  fetch-and-deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Fetch YouTube videos
+      - name: Fetch trending YouTube videos
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-          # Comma-separated channel IDs or a search query to populate your site
-          YOUTUBE_CHANNEL_IDS: "UCxxxxYourChannelIDxxxx"
+          YOUTUBE_REGION: "US"   # change to IE for Ireland, GB for UK, etc.
         run: |
           python3 - <<'EOF'
           import urllib.request, json, os
 
-          key = os.environ["YOUTUBE_API_KEY"]
-          channels = os.environ["YOUTUBE_CHANNEL_IDS"].split(",")
+          key    = os.environ["YOUTUBE_API_KEY"]
+          region = os.environ.get("YOUTUBE_REGION", "US")
+
+          # Category IDs we want trending sections for (0 = overall trending)
+          category_ids = ["0", "10", "20", "17", "23", "28"]
+          seen = set()
           videos = []
 
-          for channel_id in channels:
+          for cat_id in category_ids:
               url = (
-                  "https://www.googleapis.com/youtube/v3/search"
-                  f"?key={key}&channelId={channel_id.strip()}"
-                  "&part=snippet&order=date&maxResults=12&type=video"
+                  "https://www.googleapis.com/youtube/v3/videos"
+                  f"?key={key}"
+                  f"&regionCode={region}"
+                  f"&videoCategoryId={cat_id}"
+                  "&chart=mostPopular"
+                  "&part=snippet,contentDetails"
+                  "&maxResults=12"
               )
               with urllib.request.urlopen(url) as r:
                   data = json.loads(r.read())
 
               for item in data.get("items", []):
+                  vid_id = item["id"]
+                  if vid_id in seen:
+                      continue
+                  seen.add(vid_id)
                   snip = item["snippet"]
-                  vid_id = item["id"]["videoId"]
                   videos.append({
                       "id":        vid_id,
                       "title":     snip["title"],
-                      "category":  snip.get("categoryId", ""),
+                      "category":  snip.get("categoryId", "0"),
                       "thumb":     snip["thumbnails"]["high"]["url"],
                       "channel":   snip["channelTitle"],
                       "published": snip["publishedAt"][:10],
@@ -64,25 +45,5 @@ jobs:
           with open("videos.json", "w") as f:
               json.dump(videos, f)
 
-          print(f"Wrote {len(videos)} videos to videos.json")
+          print(f"Wrote {len(videos)} trending videos to videos.json")
           EOF
-
-      - name: Commit videos.json
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add videos.json
-          git diff --cached --quiet || git commit -m "chore: refresh video data"
-          git push
-
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload website
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
-
-      - name: Deploy website
-        id: deployment
-        uses: actions/deploy-pages@v4
