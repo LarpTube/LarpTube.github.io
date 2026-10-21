@@ -1,0 +1,47 @@
+ 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LarpTube</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0f0f0f;color:#f1f1f1;font:14px Arial,sans-serif}header{height:62px;display:flex;align-items:center;gap:20px;padding:0 22px;background:#0f0f0f;position:sticky;top:0;z-index:2;border-bottom:1px solid #252525}.logo{font-size:24px;font-weight:bold;color:#ff3939;white-space:nowrap}input{background:#191919;color:white;border:1px solid #383838;border-radius:22px;padding:12px 18px;outline:none}#search{width:min(440px,50vw);margin:auto}button{background:#272727;color:white;border:0;border-radius:18px;padding:10px 15px;cursor:pointer}button:hover{background:#414141}.layout{display:flex}.sidebar{width:200px;padding:20px 12px;position:fixed;top:62px;bottom:0;border-right:1px solid #252525}.sidebar button{display:block;width:100%;text-align:left;margin-bottom:8px;background:transparent}.sidebar button:hover,.active{background:#292929!important}main{margin-left:200px;padding:22px;width:calc(100% - 200px)}.chips{display:flex;gap:9px;overflow:auto;padding-bottom:20px}.chips button{white-space:nowrap}.chips .selected{background:white;color:#111}.videos{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:25px 16px}.video{cursor:pointer;min-width:0}.thumb{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:12px;background:#222}.video h3{font-size:15px;line-height:1.4;margin:10px 0 6px}.meta{color:#aaa;line-height:1.6}.player{display:none;max-width:1000px;margin:auto}.player video,.player iframe{width:100%;aspect-ratio:16/9;background:#000;border:0;border-radius:12px}.player h1{font-size:23px}.empty{color:#aaa;padding:40px 0}#back{margin-bottom:16px}@media(max-width:700px){.sidebar{width:64px;padding:12px 5px}.sidebar button{font-size:0;text-align:center;padding:13px 3px}.sidebar button:first-letter{font-size:17px}main{margin-left:64px;width:calc(100% - 64px);padding:12px}.videos{grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:18px 10px}header{gap:10px;padding:0 10px}.logo{font-size:19px}#search{width:100%;min-width:0}.logo span{display:none}}
+</style>
+</head>
+<body>
+<header><div class="logo">▶ LarpTube</div><input id="search" placeholder="Search videos..." aria-label="Search videos"><button onclick="render()">Search</button></header>
+<div class="layout">
+<nav class="sidebar"><button class="active" onclick="home()">⌂ Home</button><button onclick="filter('Gaming')">🎮 Gaming</button><button onclick="filter('Music')">♫ Music</button><button onclick="filter('Education')">▤ Education</button><button onclick="filter('Comedy')">☻ Comedy</button><button onclick="filter('Technology')">⚙ Technology</button></nav>
+<main>
+<div id="home">
+<div class="chips" id="chips"></div>
+<div class="videos" id="videos"></div>
+</div>
+<section class="player" id="player"><button id="back" onclick="home()">← Back to home</button><div id="screen"></div><h1 id="title"></h1><div class="meta" id="details"></div><p id="description"></p></section>
+</main>
+</div>
+<script>
+const categories=['All','Gaming','Music','Education','Comedy','Technology','News','Sports'];
+const samples=[
+['Minecraft Survival Adventure','Gaming','Minecraft','https://images.unsplash.com/photo-1607513746994-51f730a44832?auto=format&fit=crop&w=640&q=80'],
+['Discover the World','Education','Learning','https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=640&q=80'],
+['Music for Your Day','Music','LarpTube Music','https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=640&q=80'],
+['Funny Moments Compilation','Comedy','LarpTube Comedy','https://images.unsplash.com/photo-1527224857830-43a7acc85260?auto=format&fit=crop&w=640&q=80'],
+['Inside Modern Technology','Technology','Tech World','https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=640&q=80'],
+['Gaming Setup Tour','Gaming','Player One','https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=640&q=80'],
+['Beautiful Nature','Education','Earth Studio','https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=640&q=80'],
+['Studio Music Session','Music','Sound Lab','https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=640&q=80']
+].map((v,i)=>({id:i,title:v[0],category:v[1],channel:v[2],thumb:v[3],url:''}));
+let selected='All';
+const chips=document.getElementById('chips'),videos=document.getElementById('videos');
+categories.forEach(c=>{let b=document.createElement('button');b.textContent=c;b.onclick=()=>{selected=c;render()};chips.append(b)});
+function render(){chips.querySelectorAll('button').forEach(b=>b.classList.toggle('selected',b.textContent===selected));let q=document.getElementById('search').value.toLowerCase();let list=samples.filter(v=>(selected==='All'||v.category===selected)&&(`${v.title} ${v.channel} ${v.category}`).toLowerCase().includes(q));videos.innerHTML='';list.forEach(v=>{let card=document.createElement('article');card.className='video';card.innerHTML=`<img class="thumb" src="${v.thumb}" alt=""><h3></h3><div class="meta"></div>`;card.querySelector('h3').textContent=v.title;card.querySelector('.meta').textContent=v.channel+' · '+v.category;card.onclick=()=>watch(v.id);videos.append(card)});if(!list.length)videos.innerHTML='<p class="empty">No videos found.</p>'}
+function filter(c){selected=c;render()}
+function home(){document.getElementById('home').style.display='block';document.getElementById('player').style.display='none';render()}
+function watch(id){let v=samples.find(v=>v.id===id);document.getElementById('home').style.display='none';document.getElementById('player').style.display='block';document.getElementById('screen').innerHTML=v.url?`<video controls autoplay src="${v.url}"></video>`:'<div style="aspect-ratio:16/9;background:#191919;display:grid;place-items:center;color:#aaa;border-radius:12px;text-align:center;padding:20px">This sample video has no playable file yet.<br>Video hosting will be connected in the next stage.</div>';document.getElementById('title').textContent=v.title;document.getElementById('details').textContent=v.channel+' · '+v.category;document.getElementById('description').textContent='Welcome to LarpTube. Video playback and creator uploads will be connected as the platform develops.';history.replaceState({},'',`?watch=${id}`)}
+document.getElementById('search').addEventListener('input',render);
+render();
+</script>
+</body>
+</html>
